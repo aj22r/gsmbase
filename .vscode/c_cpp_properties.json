@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "test",
+            "includePath": [
+                "D:\\Desktop\\Desktop\\arm-none-eabi\\arm-none-eabi\\include",
+                "${workspaceFolder}/../include/"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "__ATSAMD10C14A__",
+                "F_CPU=48000000"
+            ],
+            "compilerPath": "D:\\Desktop\\Desktop\\arm-none-eabi\\bin\\arm-none-eabi-g++.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x86"
+        }
+    ],
+    "version": 4
+}
