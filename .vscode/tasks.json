@@ -4,8 +4,10 @@
         {
             "type": "shell",
             "label": "build active file",
-            "command": "make",
-            "args": [],
+            "command": "cmd",
+            "args": [
+                "/c", "cmake . -G \\\"MinGW Makefiles\\\" && make"
+            ],
             "problemMatcher": [
                 "$gcc"
             ],

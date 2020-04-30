@@ -1,0 +1,5 @@
+C:/Users/Artur/Desktop/Desktop2/vscode mcu/vscode_samd10c14/gsmbase/CMakeFiles/edit_cache.dir
+C:/Users/Artur/Desktop/Desktop2/vscode mcu/vscode_samd10c14/gsmbase/CMakeFiles/gsmbase.elf.dir
+C:/Users/Artur/Desktop/Desktop2/vscode mcu/vscode_samd10c14/gsmbase/CMakeFiles/hex.dir
+C:/Users/Artur/Desktop/Desktop2/vscode mcu/vscode_samd10c14/gsmbase/CMakeFiles/lss.dir
+C:/Users/Artur/Desktop/Desktop2/vscode mcu/vscode_samd10c14/gsmbase/CMakeFiles/rebuild_cache.dir

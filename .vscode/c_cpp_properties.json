@@ -4,7 +4,9 @@
             "name": "test",
             "includePath": [
                 "D:\\Desktop\\Desktop\\arm-none-eabi\\arm-none-eabi\\include",
-                "${workspaceFolder}/../include/"
+                "${workspaceFolder}/../include/",
+                "src/GSM",
+                "src/peripherals"
             ],
             "defines": [
                 "_DEBUG",
