@@ -6,7 +6,8 @@
                 "D:\\Desktop\\Desktop\\arm-none-eabi\\arm-none-eabi\\include",
                 "${workspaceFolder}/../include/",
                 "src/GSM",
-                "src/peripherals"
+                "src/peripherals",
+                "src/utils"
             ],
             "defines": [
                 "_DEBUG",

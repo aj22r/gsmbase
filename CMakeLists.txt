@@ -22,6 +22,7 @@ include_directories(
     ..
     src/GSM
     src/peripherals
+    src/utils
 )
 
 file(GLOB_RECURSE SRCS "src/*.c" "src/*.cpp" "src/*.s")
@@ -41,10 +42,10 @@ add_definitions(
 set(CMAKE_EXE_LINKER_FLAGS "-mcpu=${ARCH} -mthumb -Wl,--gc-sections -Wl,--script=../linker/samd10d14.ld --specs=nano.specs")
 
 add_compile_options(
-    #-W
+    -W
     -Wall
-    #-Wno-unused-parameter
-    -Os
+    -Wno-unused-parameter
+    -Og
     -g2
     -fno-diagnostics-show-caret
     -fdata-sections
@@ -75,3 +76,5 @@ set_target_properties(
 add_custom_target(hex ALL ${OBJCOPY} -O ihex ${BUILD_PATH}/${NAME}.elf ${BUILD_PATH}/${NAME}.hex)
 
 add_custom_target(lss ALL ${OBJDUMP} -x -S ${BUILD_PATH}/${NAME}.elf > ${BUILD_PATH}/${NAME}.lss)
+
+add_custom_target(size ALL ${SIZE} -t ${BUILD_PATH}/${NAME}.elf)
