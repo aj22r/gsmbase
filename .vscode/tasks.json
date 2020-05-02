@@ -39,7 +39,7 @@
                 "-d", "atsamd10c14a",
                 "-v",
                 "program",
-                "-f", "${workspaceFolder}/build/test.hex",
+                "-f", "${workspaceFolder}/build/gsmbase.hex",
                 "-c",
                 "--verify"
             ],

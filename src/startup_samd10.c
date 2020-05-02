@@ -27,6 +27,7 @@
  */
 
 #include <samd10.h>
+#include <systick.h>
 
 /* Initialize segments */
 extern uint32_t _etext;
@@ -176,6 +177,9 @@ void Reset_Handler(void)
 
         /* Overwriting the default value of the NVMCTRL.CTRLB.MANW bit (errata reference 13134) */
         NVMCTRL->CTRLB.bit.MANW = 1;
+
+        // Initialize system clock before any constructors are called
+        systick_init();
 
         __libc_init_array();
 

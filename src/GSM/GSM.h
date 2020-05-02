@@ -8,15 +8,20 @@
 class GSM {
 private:
     gpio_t m_pwrkey;
-    uart_t m_uart;
+    uart_t* m_uart;
 
 public:
-    GSM(const gpio_t pwrkey, const uart_t uart);
+    GSM(const gpio_t pwrkey, uart_t* uart);
     ~GSM();
 
     bool PowerOn();
-    bool Command(const char* cmd, const char* result = NULL);
-    // Repeat a command until we get the desired result
-    bool RepeatCommand(const char* cmd, const char* result, int repeats);
     bool Init();
+
+    bool Command(const char* cmd, const char* result = NULL, int response_time = 3000);
+    // Repeat a command until we get the desired result
+    bool RepeatCommand(const char* cmd, const char* result, int repeats, int response_time = 3000);
+
+    void Poll();
+
+    void ProcessSMS(int index);
 };

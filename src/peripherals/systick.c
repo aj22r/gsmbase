@@ -22,8 +22,6 @@ __attribute__ ( ( section ( ".ramfunc" ) ) ) __attribute__ ((noinline)) void del
 #pragma GCC pop_options
 
 static volatile uint64_t _cycles;
-static volatile uint32_t _micros;
-static volatile uint32_t _millis;
 
 static void initializeSystemFor48MHz()
 {
@@ -100,8 +98,6 @@ void systick_init() {
 	initializeSystemFor48MHz();
 	
 	_cycles = 0;
-	_micros = 0;
-	_millis = 0;
 
 	SysTick->CTRL = 0;
 	SysTick->LOAD = 0xFFFFFF;
@@ -117,22 +113,20 @@ uint64_t systick_cycles() {
 
 uint32_t micros() {
 	// https://en.wikipedia.org/wiki/Division_algorithm#Division_by_a_constant
-	uint64_t ticks = 0xFFFFFF - SysTick->VAL;
+	uint64_t ticks = systick_cycles();
 	ticks *= (uint64_t)( ((uint64_t)1 << 35) / (long double)(F_CPU/1000000) + 0.99999999 );
 	ticks >>= 35;
-	return _micros + (uint32_t)ticks;
+	return (uint32_t)ticks;
 }
 
 uint32_t millis() {
 	// https://en.wikipedia.org/wiki/Division_algorithm#Division_by_a_constant
-	uint64_t ticks = 0xFFFFFF - SysTick->VAL;
+	uint64_t ticks = systick_cycles();
 	ticks *= (uint64_t)( ((uint64_t)1 << 35) / (long double)(F_CPU/1000) + 0.99999999 );
 	ticks >>= 35;
-	return _millis + (uint32_t)ticks;
+	return (uint32_t)ticks;
 }
 
 void SysTick_Handler() {
 	_cycles += 0x1000000;
-	_micros += 0x1000000 / (F_CPU/1000000);
-	_millis += 0x1000000 / (F_CPU/1000);
 }

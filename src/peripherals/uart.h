@@ -4,7 +4,7 @@
 #include <gpio.h>
 #include <string>
 
-#define CALC_BAUD(x) (uint16_t)(65536UL * (1 - (8 * (x / F_CPU))))
+#define CALC_BAUD(x) (uint16_t)(65536.0 * (1.0 - (16.0 * ((double)x / (double)F_CPU))))
 
 #define UART_SER1_RXPO_PA30 0
 #define UART_SER0_RXPO_ALT_PA04 0
@@ -41,20 +41,28 @@ struct uart_pincfg_t {
 
 class uart_t {
 private:
-    Sercom* m_sercom;
+    Sercom* m_sercom = NULL;
 
-    uint8_t m_rxbuf[512];
-    uint16_t m_rxhead;
-    uint16_t m_rxtail;
-    bool m_rxfull;
+    volatile uint8_t m_rxbuf[512];
+    volatile uint16_t m_rxhead = 0;
+    volatile uint16_t m_rxtail = 0;
+    volatile bool m_rxfull = false;
+
+    bool m_used = false;
 
 public:
-    uart_t(Sercom* sercom, const uart_pincfg_t& pincfg, uint16_t speed);
+    uart_t(Sercom* sercom) { m_sercom = sercom; }
+
+    void init(const uart_pincfg_t& pincfg, uint16_t speed);
     void write(char c);
     void print(const char* str);
     void print(const std::string& str);
     char getc();
     void gets(char *s, int n);
+
+    // Allocates a buffer and reads all available data into it
+    char* read();
+
     bool rxempty();
     void flush_rx() {
         m_rxhead = 0;
@@ -72,3 +80,6 @@ public:
     
     void sercom_handler();
 };
+
+extern uart_t g_uart0;
+extern uart_t g_uart1;

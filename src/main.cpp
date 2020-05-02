@@ -12,19 +12,26 @@ static GSM gsm(
     // PWRKEY on PA2
     {GPIO_PORTA, 2},
     // TX on PA24 and RX on PA25
-    uart_t(SERCOM0, {{GPIO_PORTA, 24}, {GPIO_PORTA, 25}, UART_SER1_TXPO_PA24, UART_SER1_RXPO_PA25}, CALC_BAUD(9600))
+    &g_uart1
 );
 
-volatile uint32_t test;
-
 int main() {
-    systick_init();
-    //gpio::set(led, true);
+    g_uart1.init({{GPIO_PORTA, 24}, {GPIO_PORTA, 25}, UART_SER1_TXPO_PA24, UART_SER1_RXPO_PA25}, CALC_BAUD(115200));
+
+    gpio::mode(led, GPIO_DIR_OUT);
+    
+    if(!gsm.Init()) {
+        while(1) {
+            gpio::toggle(led);
+            delay_usec(200000);
+        }
+    }
 
     while(1) {
+        gsm.Poll();
+        
         gpio::toggle(led);
-        uint32_t last_millis = millis();
-        while(millis() - last_millis < 250);
-        //delay_usec(250000);
+        //auto start = millis();
+        //while(millis() - start < 500);
     }
 }
