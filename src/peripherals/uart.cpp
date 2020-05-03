@@ -8,12 +8,15 @@ uart_t g_uart0(SERCOM0);
 uart_t g_uart1(SERCOM1);
 
 /*int _write(int file, char* data, int len) {
-    if(!file || file == STDOUT_FILENO || file == STDERR_FILENO) return 0;
-
-    for(int i = 0; i < len; i++)
-        ((uart_t*)file)->write(*data++);
+    if(file == (int)&g_uart0) {
+        g_uart0.print(data, len);
+        return len;
+    } else if(file == (int)&g_uart1) {
+        g_uart1.print(data, len);
+        return len;
+    }
     
-    return len;
+    return 0;
 }*/
 
 void uart_t::init(const uart_pincfg_t& pincfg, uint16_t speed) {
@@ -72,10 +75,10 @@ void uart_t::write(char c) {
 	while(!m_sercom->USART.INTFLAG.bit.DRE);
 }
 
-void uart_t::print(const char* str) {
+void uart_t::print(const char* str, int len) {
     if(!m_used) return;
     
-    while(*str) write(*str++);
+    while((len == -1) ? *str : len--) write(*str++);
 }
 
 void uart_t::print(const std::string& str) {
@@ -141,11 +144,13 @@ char* uart_t::read() {
     size_t avail = available();
     if(!avail) return NULL;
 
-    char* data = (char*)malloc(avail);
+    char* data = (char*)malloc(avail + 1);
     if(!data) return NULL;
 
     for(size_t i = 0; i < avail; i++)
         data[i] = getc();
+
+    data[avail] = '\0';
     
     return data;
 }

@@ -1,8 +1,33 @@
 #include "GSM.h"
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 extern "C" {
 #include <systick.h>
+}
+
+static int find_num(const char* str) {
+    while(*str) {
+        if(isdigit(*str))
+            return atoi(str);
+        str++;
+    }
+    return 0;
+}
+
+static void func_exec(GSM* gsm, const char* sender, const char* args) {
+    if(!gsm->Command(args)) {
+        gsm->SendSMS(sender, "Command timed out");
+    } else {
+        char* resp = gsm->m_uart->read();
+        if(!resp) {
+            gsm->SendSMS(sender, "uart->read() returned null");
+        } else {
+            gsm->SendSMS(sender, resp);
+
+            free(resp);
+        }
+    }
 }
 
 GSM::GSM(const gpio_t pwrkey, uart_t* uart) :
@@ -10,6 +35,8 @@ GSM::GSM(const gpio_t pwrkey, uart_t* uart) :
 {
     gpio::mode(m_pwrkey, GPIO_DIR_OUT); // Set pwrkey pin to output
     gpio::set(m_pwrkey, true); // Set pwrkey to high
+
+    m_smsfuncs.push_back({"exec", func_exec, 0});
 }
 
 GSM::~GSM() {
@@ -70,6 +97,7 @@ bool GSM::Init() {
     if(!RepeatCommand("AT+CREG?", "+CREG: 0,1", 25))
         return false;
     Command("AT+CMGF=1"); // SMS text mode
+    Command("AT+CMGDA=\"DEL ALL\""); // Delete all sms
 
     m_uart->flush_rx();
 
@@ -83,20 +111,85 @@ void GSM::Poll() {
     delay_usec(100000);
 
     char* data = m_uart->read();
+    if(!data) return;
 
-    asm volatile("nop");
     if(strstr(data, "RING")) {
         Command("ATH"); // Disconnect call
     } else if(strstr(data, "+CMTI")) {
         // Speed doesn't matter, we can call strstr twice
-        int idx = -1;
-        sscanf(strstr(data, "+CMTI"), "+CMTI: %*s %d", &idx);
-        if(idx != -1) ProcessSMS(idx);
+        ReadSMS(find_num(strstr(data, "+CMTI")));
     }
 
     free(data);
 }
 
-void GSM::ProcessSMS(int index) {
+void GSM::ReadSMS(int index) {
+    // TODO
+    char buf[64];
+    snprintf(buf, sizeof(buf), "AT+CMGR=%d", index);
+    if(!Command(buf, "+CMGR"))
+        return;
 
+    // +CMGR: "REC UNREAD","+37250000000",.....\r\nDATA
+    char* data = m_uart->read();
+    if(!data) return;
+
+    char* cmgr_start = strstr(data, "+CMGR"); // this shouldn't return null
+
+    char* text = strchr(cmgr_start, '\n');
+    if(!text) {
+        free(data);
+        return;
+    }
+    text += 1; // ignore \n
+    char* text_end = strstr(text, "\r\n\r\nOK");
+    if(!text_end) {
+        free(data);
+        return;
+    }
+    *text_end = '\0';
+
+    char* sender = strstr(cmgr_start, ",\"");
+    if(!sender) {
+        free(data);
+        return;
+    }
+    sender += 2;
+
+    if(!strchr(sender, '"')) {
+        free(data);
+        return;
+    }
+    *strchr(sender, '"') = '\0';
+
+    ProcessSMS(text, sender);
+
+    free(data);
+}
+
+void GSM::ProcessSMS(const char* text, const char* sender) {
+    char* args_start = strchr(text, ' ');
+    if(args_start) {
+        *args_start = '\0';
+        args_start += 1;
+    }
+
+    for(auto& func : m_smsfuncs) {
+        if(strcasecmp(func.key, text) == 0) {
+            func.callback(this, sender, args_start);
+            break;
+        }
+    }
+}
+
+bool GSM::SendSMS(const char* number, const char* text) {
+    // TODO
+    char buf[64];
+    snprintf(buf, sizeof(buf), "AT+CMGS=\"%s\"", number);
+    if(!Command(buf))
+        return false;
+    
+    m_uart->print(text);
+
+    return Command("\x1A", "+CMGS", 60000); // AT+CMGS max response time is 60 sec
 }

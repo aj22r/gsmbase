@@ -4,13 +4,25 @@
 #include <stdbool.h>
 #include <gpio.h>
 #include <uart.h>
+#include <vector.h>
+
+class GSM;
+typedef void(*SMSFuncCallback)(GSM*, const char*, const char*);
+
+struct SMSFunc {
+    const char* key;
+    SMSFuncCallback callback;
+    uint8_t level;
+};
 
 class GSM {
 private:
     gpio_t m_pwrkey;
-    uart_t* m_uart;
+    Vector<SMSFunc> m_smsfuncs;
 
 public:
+    uart_t* m_uart;
+
     GSM(const gpio_t pwrkey, uart_t* uart);
     ~GSM();
 
@@ -23,5 +35,9 @@ public:
 
     void Poll();
 
-    void ProcessSMS(int index);
+    void ReadSMS(int index);
+    void ProcessSMS(const char* text, const char* sender);
+    bool SendSMS(const char* number, const char* text);
+
+    void AddSMSFunc(const SMSFunc& func) { m_smsfuncs.push_back(func); }
 };

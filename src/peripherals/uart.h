@@ -55,7 +55,7 @@ public:
 
     void init(const uart_pincfg_t& pincfg, uint16_t speed);
     void write(char c);
-    void print(const char* str);
+    void print(const char* str, int len = -1);
     void print(const std::string& str);
     char getc();
     void gets(char *s, int n);
