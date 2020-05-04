@@ -33,16 +33,16 @@ static void cmd_info(GSM* gsm, const char* sender, const char* args) {
             node.data.id, node.data.name, node.data.type, (millis() - node.last_seen) / 1000);
 
         switch(node.data.type) {
-            case sensors::TYPE_SOIL:
-                str.appendf(" Soil moisture sensor:\n  Moisture: %d\n", ((sensors::Soil*)node.data.data)->moisture);
+            case Sensors::TYPE_SOIL:
+                str.appendf(" Soil moisture sensor:\n  Moisture: %d\n", ((Sensors::Soil*)node.data.data)->moisture);
                 break;
-            case sensors::TYPE_TEMP_HUM:
+            case Sensors::TYPE_TEMP_HUM:
                 str.appendf(" Temperature + humidity sensor:\n  Temperature: %d\n  Humidity: %d\n",
-                    ((sensors::TempHum*)node.data.data)->temperature, ((sensors::TempHum*)node.data.data)->humidity);
+                    ((Sensors::TempHum*)node.data.data)->temperature, ((Sensors::TempHum*)node.data.data)->humidity);
                 break;
-            case sensors::TYPE_TEMP:
+            case Sensors::TYPE_TEMP:
                 str.appendf(" Temperature sensor:\n  Temperature: %d\n",
-                    ((sensors::Temp*)node.data.data)->temperature);
+                    ((Sensors::Temp*)node.data.data)->temperature);
                 break;
             default:
                 break;

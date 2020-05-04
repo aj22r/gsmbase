@@ -8,7 +8,7 @@ extern "C" {
 Sensornet::Sensornet(const RF24& radio) :
     m_radio(radio)
 {
-    const Node node1 = {
+    /*const Node node1 = {
         {
             1,
             "test1",
@@ -30,7 +30,7 @@ Sensornet::Sensornet(const RF24& radio) :
         millis()
     };
 
-    m_nodes.push_back(node2);
+    m_nodes.push_back(node2);*/
 }
 
 bool Sensornet::begin() {
@@ -65,7 +65,36 @@ void Sensornet::Poll() {
     }
 }
 
-void Sensornet::ProcessPacket(const SensorPacket& pkt) {
+void Sensornet::ProcessPacket(SensorPacket& pkt) {
+    if(pkt.id == 0) {
+        // Initial node id
+        pkt.id = 1;
+
+        for(auto& node : m_nodes) {
+            // If a node with the same name exists, replace it
+            if(strncmp(node.data.name, pkt.name, sizeof(SensorPacket::name)) == 0) {
+                pkt.id = node.data.id;
+                break;
+            }
+
+            // Find a new id for the new node
+            if(node.data.id >= pkt.id) pkt.id = node.data.id + 1;
+        }
+
+        UpdateNode(pkt);
+
+        // Send the packet back to set node's ID
+        m_radio.stopListening();
+        pkt.type = Sensors::TYPE_COMMAND;
+        pkt.data[0] = Sensors::COMMAND_SET_ID;
+        m_radio.write(&pkt, 32);
+        m_radio.startListening();
+    } else {
+        UpdateNode(pkt);
+    }
+}
+
+void Sensornet::UpdateNode(const SensorPacket& pkt) {
     for(auto& node : m_nodes) {
         if(node.data.id == pkt.id) {
             memcpy(&node.data, &pkt, sizeof(SensorPacket));

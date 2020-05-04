@@ -15,7 +15,8 @@ class Sensornet {
 private:
     RF24 m_radio;
 
-    void ProcessPacket(const SensorPacket& pkt);
+    void ProcessPacket(SensorPacket& pkt);
+    void UpdateNode(const SensorPacket& pkt);
 
 public:
     struct Node {
