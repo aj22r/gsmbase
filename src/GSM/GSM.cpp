@@ -43,7 +43,7 @@ GSM::~GSM() {
     
 }
 
-bool GSM::Command(const char* cmd, const char* result, int response_time) {
+bool GSM::Command(const char* cmd, const char* result, unsigned int response_time) {
     uint32_t start;
 
     m_uart->flush_rx();
@@ -74,6 +74,10 @@ bool GSM::RepeatCommand(const char* cmd, const char* result, int repeats, int re
 
 bool GSM::PowerOn() {
     m_uart->write('\r');
+
+    // Check if the GSM module is already powered on
+    if(Command("AT", "OK", 500))
+        return true;
     
     // Fail after 3 attempts to power cycle
     for(int i = 0; i < 3; i++) {
@@ -191,5 +195,7 @@ bool GSM::SendSMS(const char* number, const char* text) {
     
     m_uart->print(text);
 
-    return Command("\x1A", "+CMGS", 60000); // AT+CMGS max response time is 60 sec
+    bool success = Command("\x1A", "+CMGS", 60000); // AT+CMGS max response time is 60 sec
+    m_uart->flush_rx();
+    return success;
 }

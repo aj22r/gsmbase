@@ -1,9 +1,10 @@
 #include "spi.h"
 
-void spi::init(Sercom* sercom, spi_pincfg_t pincfg, uint16_t speed) {
-    m_sercom = sercom;
+spi_t g_spi0(SERCOM0);
+spi_t g_spi1(SERCOM1);
 
-    if(sercom == SERCOM1) {
+void spi_t::Init(spi_pincfg_t pincfg, uint16_t speed) {
+    if(m_sercom == SERCOM1) {
         /*PM->APBCMASK.reg |= PM_APBCMASK_SERCOM1;
         GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID(SERCOM1_GCLK_ID_CORE) |
             GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN(0);*/
@@ -20,34 +21,34 @@ void spi::init(Sercom* sercom, spi_pincfg_t pincfg, uint16_t speed) {
     gpio::pmuxen(pincfg.mosi, pincfg.mosi_alt ? GPIO_PMUX_D : GPIO_PMUX_C);
     gpio::pmuxen(pincfg.sck, pincfg.sck_alt ? GPIO_PMUX_D : GPIO_PMUX_C);
 
-    sercom->SPI.CTRLA.bit.ENABLE = 0;
-	sercom->SPI.CTRLA.bit.SWRST = 1;
-	while(sercom->SPI.CTRLA.bit.SWRST);
+    m_sercom->SPI.CTRLA.bit.ENABLE = 0;
+	m_sercom->SPI.CTRLA.bit.SWRST = 1;
+	while(m_sercom->SPI.CTRLA.bit.SWRST);
 
-	sercom->SPI.CTRLA.bit.MODE = SERCOM_SPI_CTRLA_MODE_SPI_MASTER_Val;
-	sercom->SPI.CTRLA.bit.DOPO = pincfg.mosisckpad;
-	sercom->SPI.CTRLA.bit.DIPO = pincfg.misopad;
+	m_sercom->SPI.CTRLA.bit.MODE = SERCOM_SPI_CTRLA_MODE_SPI_MASTER_Val;
+	m_sercom->SPI.CTRLA.bit.DOPO = pincfg.mosisckpad;
+	m_sercom->SPI.CTRLA.bit.DIPO = pincfg.misopad;
 
     /* synchronization busy */
-    while(sercom->SPI.SYNCBUSY.bit.CTRLB);
+    while(m_sercom->SPI.SYNCBUSY.bit.CTRLB);
     /* SPI receiver is enabled */
-    sercom->SPI.CTRLB.bit.RXEN = 1;
+    m_sercom->SPI.CTRLB.bit.RXEN = 1;
     /* synchronization busy */
-    while(sercom->SPI.SYNCBUSY.bit.CTRLB);
+    while(m_sercom->SPI.SYNCBUSY.bit.CTRLB);
 
     /* baud register value corresponds to the SPI speed */
-    sercom->SPI.BAUD.reg = speed;
+    m_sercom->SPI.BAUD.reg = speed;
     /* SERCOM peripheral enabled */
-    sercom->SPI.CTRLA.bit.ENABLE = 1;
+    m_sercom->SPI.CTRLA.bit.ENABLE = 1;
     /* synchronization busy */
-    while(sercom->SPI.SYNCBUSY.bit.ENABLE);
+    while(m_sercom->SPI.SYNCBUSY.bit.ENABLE);
 }
 
-spi::spi(Sercom* sercom, spi_pincfg_t pincfg, uint16_t speed) {
-    init(sercom, pincfg, speed);
+spi_t::spi_t(Sercom* sercom) {
+    m_sercom = sercom;
 }
 
-uint8_t spi::transfer(uint8_t b) {
+uint8_t spi_t::Transfer(uint8_t b) {
     if(!m_sercom) return 0xFF;
 
     while(!m_sercom->SPI.INTFLAG.bit.DRE); // Wait for data register empty

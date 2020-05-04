@@ -16,12 +16,16 @@ typedef struct {
     uint8_t mosisckpad;
 } spi_pincfg_t;
 
-class spi {
+class spi_t {
 private:
     Sercom* m_sercom;
 
 public:
-    void init(Sercom* sercom, spi_pincfg_t pincfg, uint16_t speed);
-    spi(Sercom* sercom, spi_pincfg_t pincfg, uint16_t speed);
-    uint8_t transfer(uint8_t b);
+    spi_t(Sercom* sercom);
+
+    void Init(spi_pincfg_t pincfg, uint16_t speed);
+    uint8_t Transfer(uint8_t b);
 };
+
+extern spi_t g_spi0;
+extern spi_t g_spi1;

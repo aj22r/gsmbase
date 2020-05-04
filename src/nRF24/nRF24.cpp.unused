@@ -1,0 +1,10 @@
+#include "nRF24.h"
+
+nRF24::nRF24(spi_t* spi, const gpio_t& ce, const gpio_t& cs) :
+    m_spi(spi), m_ce(ce), m_cs(cs)
+{
+    gpio::set(ce, false);
+    gpio::mode(ce, GPIO_DIR_OUT);
+    gpio::set(cs, false);
+    gpio::mode(cs, GPIO_DIR_OUT);
+}

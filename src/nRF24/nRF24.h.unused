@@ -1,0 +1,15 @@
+#pragma once
+
+#include <gpio.h>
+#include <spi.h>
+
+class nRF24 {
+private:
+    spi_t* m_spi;
+    const gpio_t m_ce;
+    const gpio_t m_cs;
+
+public:
+    nRF24(spi_t* spi, const gpio_t& ce, const gpio_t& cs);
+    ~nRF24();
+};

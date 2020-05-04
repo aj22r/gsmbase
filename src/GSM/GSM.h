@@ -29,7 +29,7 @@ public:
     bool PowerOn();
     bool Init();
 
-    bool Command(const char* cmd, const char* result = NULL, int response_time = 3000);
+    bool Command(const char* cmd, const char* result = NULL, unsigned int response_time = 3000);
     // Repeat a command until we get the desired result
     bool RepeatCommand(const char* cmd, const char* result, int repeats, int response_time = 3000);
 

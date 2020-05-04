@@ -23,6 +23,9 @@ include_directories(
     src/GSM
     src/peripherals
     src/utils
+    src/sensornet
+    src/nRF24
+    src/RF24
 )
 
 file(GLOB_RECURSE SRCS "src/*.c" "src/*.cpp" "src/*.s")
