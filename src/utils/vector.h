@@ -26,7 +26,6 @@ public:
     }
 
     T& operator[](size_t idx) {
-        if(idx >= m_size) return {};
         return *(m_data + idx);
     }
 
@@ -38,6 +37,16 @@ public:
         return m_data + m_size;
     }
 
+    size_t size() {
+        return m_size;
+    }
+
+    void clear() {
+        if(m_data && m_size) free(m_data);
+        m_data = NULL;
+        m_size = 0;
+    }
+
     void erase(T* it) {
         if(!m_size || it < begin() || it >= end()) return;
 
@@ -46,6 +55,7 @@ public:
         m_size -= 1;
         if(!m_size) {
             free(m_data);
+            m_data = NULL;
             return;
         }
 

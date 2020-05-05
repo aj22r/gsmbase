@@ -26,7 +26,7 @@ static GSM gsm(
 static Sensornet net(RF24({ GPIO_PORTA, 14 }, { GPIO_PORTA, 15 }, g_spi0));
 
 static void cmd_info(GSM* gsm, const char* sender, const char* args) {
-    Str str;
+    Str str = "List:\n";
 
     for(auto& node : net.m_nodes) {
         str.appendf("Node:\n ID: %d\n Name: %s\n Type: %d\n Last seen: %d sec ago\n",
@@ -85,6 +85,8 @@ int main() {
     }
 
     gsm.AddSMSFunc({ "info", cmd_info, 0 });
+    gsm.AddSMSFunc({ "setname", [](GSM* gsm, const char* sender, const char* args) { net.CMDSetName(gsm, sender, args); }, 0});
+    gsm.AddSMSFunc({ "clear", [](GSM* gsm, const char* sender, const char* args) { net.m_nodes.clear(); }, 0});
 
     while(1) {
         gsm.Poll();

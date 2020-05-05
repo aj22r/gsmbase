@@ -11,7 +11,8 @@ namespace Sensors {
 	};
 
 	enum : uint8_t {
-		COMMAND_SET_ID = 1
+		COMMAND_SET_ID = 1,
+		COMMAND_SET_NAME = 2
 	};
 
 	// each sensor type has 18 bytes to use

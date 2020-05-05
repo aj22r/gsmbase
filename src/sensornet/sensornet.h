@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <vector.h>
 #include <RF24.h>
+#include <GSM.h>
 
 struct SensorPacket {
 	int8_t id; // 1 byte
@@ -14,6 +15,8 @@ struct SensorPacket {
 class Sensornet {
 private:
     RF24 m_radio;
+
+    Vector<SensorPacket> m_cmd_queue;
 
     void ProcessPacket(SensorPacket& pkt);
     void UpdateNode(const SensorPacket& pkt);
@@ -31,4 +34,5 @@ public:
     bool begin();
 
     void Poll();
+    void CMDSetName(GSM* gsm, const char* sender, const char* c_args);
 };

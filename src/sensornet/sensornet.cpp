@@ -39,7 +39,7 @@ bool Sensornet::begin() {
 
     m_radio.setChannel(120);
     m_radio.setAutoAck(true);
-    m_radio.enableAckPayload();
+    //m_radio.enableAckPayload();
     m_radio.setRetries(5, 15);
     m_radio.setPayloadSize(32);
 
@@ -62,6 +62,8 @@ void Sensornet::Poll() {
         m_radio.read(&pkt, 32);
 
         ProcessPacket(pkt);
+
+        m_radio.flush_rx();
     }
 }
 
@@ -91,6 +93,18 @@ void Sensornet::ProcessPacket(SensorPacket& pkt) {
         m_radio.startListening();
     } else {
         UpdateNode(pkt);
+
+        for(size_t i = 0; i < m_cmd_queue.size(); i++) {
+            auto& cmd = m_cmd_queue[i];
+            if(cmd.id == pkt.id) {
+                m_radio.stopListening();
+                m_radio.write(&cmd, 32);
+                m_radio.startListening();
+
+                m_cmd_queue.erase(m_cmd_queue.begin() + i);
+                i--;
+            }
+        }
     }
 }
 
@@ -104,4 +118,38 @@ void Sensornet::UpdateNode(const SensorPacket& pkt) {
     }
 
     m_nodes.push_back({ pkt, millis() });
+}
+
+void Sensornet::CMDSetName(GSM* gsm, const char* sender, const char* c_args) {
+    char* id_str = NULL;
+    char* name = NULL;
+    char* args = NULL;
+
+    if(c_args) {
+        args = (char*)malloc(strlen(c_args));
+        if(!args) {
+            gsm->SendSMS(sender, "malloc failed");
+            return;
+        }
+        strcpy(args, c_args);
+
+        id_str = strtok(args, " ");
+        name = strtok(NULL, " ");
+    }
+
+    if(id_str && name && atoi(id_str)) {
+        SensorPacket cmd;
+        cmd.id = atoi(id_str);
+        cmd.type = Sensors::TYPE_COMMAND;
+        cmd.data[0] = Sensors::COMMAND_SET_NAME;
+        strncpy(cmd.name, name, sizeof(cmd.name));
+
+        m_cmd_queue.push_back(cmd);
+
+        gsm->SendSMS(sender, "Command queued");
+    } else {
+        gsm->SendSMS(sender, "Usage: setname <id> <new name>");
+    }
+
+    if(args) free(args);
 }

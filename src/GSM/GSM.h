@@ -12,7 +12,7 @@ typedef void(*SMSFuncCallback)(GSM*, const char*, const char*);
 struct SMSFunc {
     const char* key;
     SMSFuncCallback callback;
-    uint8_t level;
+    char level;
 };
 
 class GSM {
@@ -40,4 +40,7 @@ public:
     bool SendSMS(const char* number, const char* text);
 
     void AddSMSFunc(const SMSFunc& func) { m_smsfuncs.push_back(func); }
+
+    // Get access level of a phone number
+    char GetNumLevel(const char* num);
 };

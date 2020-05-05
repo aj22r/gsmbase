@@ -199,3 +199,7 @@ bool GSM::SendSMS(const char* number, const char* text) {
     m_uart->flush_rx();
     return success;
 }
+
+char GSM::GetNumLevel(const char* num) {
+
+}
