@@ -5,6 +5,7 @@
 #include <gpio.h>
 #include <uart.h>
 #include <vector.h>
+#include <Str.h>
 
 class GSM;
 typedef void(*SMSFuncCallback)(GSM*, const char*, const char*);
@@ -50,4 +51,5 @@ public:
     char GetNumLevel(const char* num);
     void SetNumLevel(const char* num, char level);
     void RemoveNum(const char* num);
+    int GetAllNum(Vector<char*>* list = NULL);
 };

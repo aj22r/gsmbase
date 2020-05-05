@@ -2,9 +2,9 @@
 #include <gpio.h>
 #include <uart.h>
 #include <GSM.h>
-#define STR_IMPLEMENTATION
 #include <sensornet.h>
 #include <sensors.h>
+#define STR_IMPLEMENTATION
 #include <Str.h>
 #include <RF24.h>
 #include <spi.h>

@@ -67,6 +67,18 @@ static void func_delnum(GSM* gsm, const char* sender, const char* args) {
     gsm->RemoveNum(args);
 }
 
+static void func_listnum(GSM* gsm, const char* sender, const char* args) {
+    Str str = "List:\n";
+    Vector<char*> list;
+    gsm->GetAllNum(&list);
+    for(auto num : list) {
+        str.appendf("%s: %c\n", num, gsm->GetNumLevel(num));
+        free(num);
+    }
+
+    gsm->SendSMS(sender, str.c_str());
+}
+
 GSM::GSM(const gpio_t pwrkey, uart_t* uart) :
     m_pwrkey(pwrkey), m_uart(uart)
 {
@@ -76,6 +88,7 @@ GSM::GSM(const gpio_t pwrkey, uart_t* uart) :
     m_smsfuncs.push_back({"exec", func_exec, LEVEL_ADMIN});
     m_smsfuncs.push_back({"setnum", func_setnum, LEVEL_ADMIN});
     m_smsfuncs.push_back({"delnum", func_delnum, LEVEL_ADMIN});
+    m_smsfuncs.push_back({"listnum", func_listnum, LEVEL_USER});
 }
 
 GSM::~GSM() {
@@ -219,7 +232,7 @@ void GSM::ProcessSMS(const char* text, const char* sender) {
 
     for(auto& func : m_smsfuncs) {
         if(strcasecmp(func.key, text) == 0) {
-            if(GetNumLevel(sender) >= func.level)
+            if(GetNumLevel(sender) >= func.level || GetAllNum() == 0)
                 func.callback(this, sender, args_start);
             break;
         }
@@ -278,4 +291,31 @@ void GSM::RemoveNum(const char* num) {
     char buf[64];
     snprintf(buf, sizeof(buf), "AT+FSDEL=C:\\%s.txt", num);
     Command(buf);
+}
+
+int GSM::GetAllNum(Vector<char*>* list) {
+    if(!Command("AT+FSLS=C:\\"))
+        return 0;
+
+    char* data = m_uart->read();
+    if(!data) return 0;
+
+    int count = 0;
+
+    char* entry = strtok(data, "\r\n");
+    while(entry) {
+        if(strlen(entry) > 4 && strcmp(entry + strlen(entry) - 4, ".txt") == 0) {
+            count++;
+            if(list) {
+                char* file = (char*)calloc(strlen(entry) - 4 + 1, 1);
+                memcpy(file, entry, strlen(entry) - 4);
+                list->push_back(file);
+            }
+        }
+        entry = strtok(NULL, "\r\n");
+    }
+
+    free(data);
+
+    return count;
 }

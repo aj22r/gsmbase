@@ -21,7 +21,8 @@ public:
         if(!new_data) return;
         m_data = new_data;
 
-        memcpy(m_data + m_size, &elem, sizeof(T));
+        //memcpy(m_data + m_size, &elem, sizeof(T));
+        *(m_data + m_size) = elem;
         m_size++;
     }
 

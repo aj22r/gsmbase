@@ -46,10 +46,8 @@ bool Sensornet::begin() {
     m_radio.setPALevel(RF24_PA_MAX);
     m_radio.setDataRate(RF24_1MBPS);
 
-    // Open pipe 0 for writing on address 55
-    m_radio.openWritingPipe((uint64_t)56);
-    // Open pipe 1 for reading on address 56
-    m_radio.openReadingPipe(1, (uint64_t)55);
+    // Open pipe 1 for reading on address 255
+    m_radio.openReadingPipe(1, (uint64_t)255 | (1 << 10));
 
     m_radio.startListening();
 
@@ -89,6 +87,7 @@ void Sensornet::ProcessPacket(SensorPacket& pkt) {
         m_radio.stopListening();
         pkt.type = Sensors::TYPE_COMMAND;
         pkt.data[0] = Sensors::COMMAND_SET_ID;
+        m_radio.openWritingPipe((uint64_t)0 | (1 << 10));
         m_radio.write(&pkt, 32);
         m_radio.startListening();
     } else {
@@ -98,6 +97,7 @@ void Sensornet::ProcessPacket(SensorPacket& pkt) {
             auto& cmd = m_cmd_queue[i];
             if(cmd.id == pkt.id) {
                 m_radio.stopListening();
+                m_radio.openWritingPipe((uint64_t)cmd.id | (1 << 10));
                 m_radio.write(&cmd, 32);
                 m_radio.startListening();
 
