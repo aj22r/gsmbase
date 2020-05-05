@@ -84,9 +84,9 @@ int main() {
         }
     }
 
-    gsm.AddSMSFunc({ "info", cmd_info, 0 });
-    gsm.AddSMSFunc({ "setname", [](GSM* gsm, const char* sender, const char* args) { net.CMDSetName(gsm, sender, args); }, 0});
-    gsm.AddSMSFunc({ "clear", [](GSM* gsm, const char* sender, const char* args) { net.m_nodes.clear(); }, 0});
+    gsm.AddSMSFunc({ "info", cmd_info, GSM::LEVEL_USER });
+    gsm.AddSMSFunc({ "setname", [](GSM* gsm, const char* sender, const char* args) { net.CMDSetName(gsm, sender, args); }, GSM::LEVEL_USER });
+    gsm.AddSMSFunc({ "clear", [](GSM* gsm, const char* sender, const char* args) { net.m_nodes.clear(); }, GSM::LEVEL_USER });
 
     while(1) {
         gsm.Poll();

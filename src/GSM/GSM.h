@@ -21,6 +21,11 @@ private:
     Vector<SMSFunc> m_smsfuncs;
 
 public:
+    enum : char {
+        LEVEL_USER = 'a',
+        LEVEL_ADMIN = 'g'
+    };
+
     uart_t* m_uart;
 
     GSM(const gpio_t pwrkey, uart_t* uart);
@@ -43,4 +48,6 @@ public:
 
     // Get access level of a phone number
     char GetNumLevel(const char* num);
+    void SetNumLevel(const char* num, char level);
+    void RemoveNum(const char* num);
 };

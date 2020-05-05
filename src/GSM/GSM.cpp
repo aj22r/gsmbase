@@ -30,13 +30,52 @@ static void func_exec(GSM* gsm, const char* sender, const char* args) {
     }
 }
 
+static void func_setnum(GSM* gsm, const char* sender, const char* c_args) {
+    char* num = NULL;
+    char* level = NULL;
+    char* args = NULL;
+
+    if(c_args) {
+        args = (char*)malloc(strlen(c_args));
+        if(!args) {
+            gsm->SendSMS(sender, "malloc failed");
+            return;
+        }
+        strcpy(args, c_args);
+
+        num = strtok(args, " ");
+        level = strtok(NULL, " ");
+    }
+
+    if(num && level) {
+        gsm->SetNumLevel(num, *level);
+
+        gsm->SendSMS(sender, "OK");
+    } else {
+        gsm->SendSMS(sender, "Usage: setnum <number> <level>");
+    }
+
+    if(args) free(args);
+}
+
+static void func_delnum(GSM* gsm, const char* sender, const char* args) {
+    if(!args) {
+        gsm->SendSMS(sender, "Usage: delnum <number>");
+        return;
+    }
+
+    gsm->RemoveNum(args);
+}
+
 GSM::GSM(const gpio_t pwrkey, uart_t* uart) :
     m_pwrkey(pwrkey), m_uart(uart)
 {
     gpio::mode(m_pwrkey, GPIO_DIR_OUT); // Set pwrkey pin to output
     gpio::set(m_pwrkey, true); // Set pwrkey to high
 
-    m_smsfuncs.push_back({"exec", func_exec, 0});
+    m_smsfuncs.push_back({"exec", func_exec, LEVEL_ADMIN});
+    m_smsfuncs.push_back({"setnum", func_setnum, LEVEL_ADMIN});
+    m_smsfuncs.push_back({"delnum", func_delnum, LEVEL_ADMIN});
 }
 
 GSM::~GSM() {
@@ -180,7 +219,8 @@ void GSM::ProcessSMS(const char* text, const char* sender) {
 
     for(auto& func : m_smsfuncs) {
         if(strcasecmp(func.key, text) == 0) {
-            func.callback(this, sender, args_start);
+            if(GetNumLevel(sender) >= func.level)
+                func.callback(this, sender, args_start);
             break;
         }
     }
@@ -201,5 +241,41 @@ bool GSM::SendSMS(const char* number, const char* text) {
 }
 
 char GSM::GetNumLevel(const char* num) {
+    // TODO
+    char buf[64];
+    snprintf(buf, sizeof(buf), "AT+FSREAD=C:\\%s.txt,0,1,0", num);
+    if(!Command(buf, "OK"))
+        return 0;
+    if(m_uart->available() < 3) return 0;
 
+    m_uart->getc(); m_uart->getc(); // skip \r\n
+
+    char level = m_uart->getc();
+    m_uart->flush_rx();
+
+    asm volatile("nop");
+
+    return level;
+}
+
+void GSM::SetNumLevel(const char* num, char level) {
+    // TODO
+    char buf[64];
+    snprintf(buf, sizeof(buf), "AT+FSCREATE=C:\\%s.txt", num);
+    Command(buf);
+
+    snprintf(buf, sizeof(buf), "AT+FSWRITE=C:\\%s.txt,0,1,1", num);
+    if(!Command(buf, ">"))
+        return;
+
+    m_uart->write(level);
+
+    Command("\r\n");
+}
+
+void GSM::RemoveNum(const char* num) {
+    // TODO
+    char buf[64];
+    snprintf(buf, sizeof(buf), "AT+FSDEL=C:\\%s.txt", num);
+    Command(buf);
 }
