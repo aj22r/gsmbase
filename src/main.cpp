@@ -27,7 +27,7 @@ static Sensornet net(RF24({ GPIO_PORTA, 14 }, { GPIO_PORTA, 15 }, g_spi0));
 
 static void cmd_info(GSM* gsm, const char* sender, const char* args) {
     Str str = "List:\n";
-
+    
     for(auto& node : net.m_nodes) {
         str.appendf("Node:\n ID: %d\n Name: %s\n Type: %d\n Last seen: %d sec ago\n",
             node.data.id, node.data.name, node.data.type, (millis() - node.last_seen) / 1000);
@@ -68,6 +68,7 @@ int main() {
     }, 20);
 
     gpio::mode(led, GPIO_DIR_OUT);
+    gpio::set(led, false);
 
     if(!net.begin()) {
         while(1) {

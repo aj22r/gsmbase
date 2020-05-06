@@ -41,8 +41,6 @@ struct uart_pincfg_t {
 
 class uart_t {
 private:
-    Sercom* m_sercom = NULL;
-
     volatile uint8_t m_rxbuf[512];
     volatile uint16_t m_rxhead = 0;
     volatile uint16_t m_rxtail = 0;
@@ -51,6 +49,8 @@ private:
     bool m_used = false;
 
 public:
+    Sercom* m_sercom = NULL;
+    
     uart_t(Sercom* sercom) { m_sercom = sercom; }
 
     void init(const uart_pincfg_t& pincfg, uint16_t speed);

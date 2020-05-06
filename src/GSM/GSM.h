@@ -19,7 +19,12 @@ struct SMSFunc {
 class GSM {
 private:
     gpio_t m_pwrkey;
-    Vector<SMSFunc> m_smsfuncs;
+
+    __attribute__((section ( ".ramfunc" ))) void WriteUpdate();
+    __attribute__((section ( ".ramfunc" ))) void RAMFunc_write(const char c);
+    __attribute__((section ( ".ramfunc" ))) void RAMFunc_print(const char* c);
+    __attribute__((section ( ".ramfunc" ))) void RAMFunc_print_int(uint16_t u);
+    __attribute__((section ( ".ramfunc" ))) bool RAMFunc_wait_rx();
 
 public:
     enum : char {
@@ -28,6 +33,7 @@ public:
     };
 
     uart_t* m_uart;
+    Vector<SMSFunc> m_smsfuncs;
 
     GSM(const gpio_t pwrkey, uart_t* uart);
     ~GSM();
@@ -52,4 +58,6 @@ public:
     void SetNumLevel(const char* num, char level);
     void RemoveNum(const char* num);
     int GetAllNum(Vector<char*>* list = NULL);
+
+    bool PerformUpdate(const char* server, const char* username, const char* password);
 };

@@ -48,7 +48,7 @@ add_compile_options(
     -W
     -Wall
     -Wno-unused-parameter
-    -Og
+    -Os
     -g2
     -fno-diagnostics-show-caret
     -fdata-sections
@@ -77,6 +77,8 @@ set_target_properties(
 )
 
 add_custom_target(hex ALL ${OBJCOPY} -O ihex ${BUILD_PATH}/${NAME}.elf ${BUILD_PATH}/${NAME}.hex)
+
+add_custom_target(bin ALL ${OBJCOPY} -O binary ${BUILD_PATH}/${NAME}.elf ${BUILD_PATH}/${NAME}.bin)
 
 add_custom_target(lss ALL ${OBJDUMP} -x -S ${BUILD_PATH}/${NAME}.elf > ${BUILD_PATH}/${NAME}.lss)
 
