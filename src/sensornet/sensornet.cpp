@@ -66,6 +66,8 @@ void Sensornet::Poll() {
 }
 
 void Sensornet::ProcessPacket(SensorPacket& pkt) {
+    m_radio.openWritingPipe((uint64_t)pkt.id | (1 << 10));
+
     if(pkt.id == 0) {
         // Initial node id
         pkt.id = 1;
@@ -87,23 +89,23 @@ void Sensornet::ProcessPacket(SensorPacket& pkt) {
         m_radio.stopListening();
         pkt.type = Sensors::TYPE_COMMAND;
         pkt.data[0] = Sensors::COMMAND_SET_ID;
-        m_radio.openWritingPipe((uint64_t)0 | (1 << 10));
+        //m_radio.openWritingPipe((uint64_t)0 | (1 << 10)); // already done at the start of this function
         m_radio.write(&pkt, 32);
         m_radio.startListening();
     } else {
         UpdateNode(pkt);
+    }
 
-        for(size_t i = 0; i < m_cmd_queue.size(); i++) {
-            auto& cmd = m_cmd_queue[i];
-            if(cmd.id == pkt.id) {
-                m_radio.stopListening();
-                m_radio.openWritingPipe((uint64_t)cmd.id | (1 << 10));
-                m_radio.write(&cmd, 32);
-                m_radio.startListening();
-
+    for(size_t i = 0; i < m_cmd_queue.size(); i++) {
+        auto& cmd = m_cmd_queue[i];
+        if(cmd.id == pkt.id) {
+            m_radio.stopListening();
+            // Consider the command successful only if it was successfully received
+            if(m_radio.write(&cmd, 32)) {
                 m_cmd_queue.erase(m_cmd_queue.begin() + i);
                 i--;
             }
+            m_radio.startListening();
         }
     }
 }
@@ -145,6 +147,13 @@ void Sensornet::CMDSetName(GSM* gsm, const char* sender, const char* c_args) {
         strncpy(cmd.name, name, sizeof(cmd.name));
 
         m_cmd_queue.push_back(cmd);
+
+        for(auto& node : m_nodes) {
+            // Change the name of existing node in memory aswell
+            if(node.data.id == cmd.id) {
+                strncpy(node.data.name, cmd.name, sizeof(cmd.name));
+            }
+        }
 
         gsm->SendSMS(sender, "Command queued");
     } else {
