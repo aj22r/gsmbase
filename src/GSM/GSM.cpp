@@ -95,7 +95,7 @@ static void func_listcmd(GSM* gsm, const char* sender, const char* args) {
 }
 
 static void func_update(GSM* gsm, const char* sender, const char* c_args) {
-    char* server = NULL;
+    /*char* server = NULL;
     char* username = NULL;
     char* pass = NULL;
     char* args = NULL;
@@ -123,7 +123,10 @@ static void func_update(GSM* gsm, const char* sender, const char* c_args) {
         gsm->SendSMS(sender, "Usage: update <server> <username> <password>");
     }
 
-    if(args) free(args);
+    if(args) free(args);*/
+
+    if(!gsm->PerformUpdate())
+        gsm->SendSMS(sender, "Update failed");
 }
 
 GSM::GSM(const gpio_t pwrkey, uart_t* uart) :
@@ -138,6 +141,7 @@ GSM::GSM(const gpio_t pwrkey, uart_t* uart) :
     m_smsfuncs.push_back({"listnum", func_listnum, LEVEL_USER});
     m_smsfuncs.push_back({"update", func_update, LEVEL_ADMIN});
     m_smsfuncs.push_back({"help", func_listcmd, LEVEL_USER});
+    m_smsfuncs.push_back({"setftpcreds", (SMSFuncCallback)&GSM::cmd_SetFTPCreds, LEVEL_USER});
 }
 
 GSM::~GSM() {
@@ -380,25 +384,131 @@ int GSM::GetAllNum(Vector<char*>* list) {
     return count;
 }
 
-bool GSM::PerformUpdate(const char* server, const char* username, const char* password) {
-    Str cmd;
-
+bool GSM::InitInternet() {
     Command("AT+SAPBR=3,1,\"APN\",\"internet\"");
-    cmd.setf("AT+FTPSERV=%s", server);
-	Command(cmd.c_str());
-    cmd.setf("AT+FTPUN=%s", username);
-	Command(cmd.c_str());
-    cmd.setf("AT+FTPPW=%s", password);
-	Command(cmd.c_str());
-	Command("AT+FTPGETPATH=/");
-	Command("AT+FTPGETNAME=update.bin");
-
     Command("AT+SAPBR=1,1"); // Open bearer
     // Wait until we are connected
     if(!RepeatCommand("AT+SAPBR=2,1", "+SAPBR: 1,1", 25)) {
         Command("AT+SAPBR=0,1"); // Close bearer
         return false;
     }
+
+    return true;
+}
+
+void GSM::cmd_SetFTPCreds(const char* sender, const char* args) {
+    Command("AT+FSCREATE=C:\\ftp.dat");
+
+    char buf[64];
+    snprintf(buf, sizeof(buf), "AT+FSWRITE=C:\\ftp.dat,0,%d,1", strlen(args));
+    if(!Command(buf, ">")) {
+        SendSMS(sender, "Error");
+        return;
+    }
+
+    m_uart->print(args);
+
+    Command("\r\n");
+
+    SendSMS(sender, "OK");
+}
+
+bool GSM::SetupFTP() {
+    if(!Command("AT+FSREAD=C:\\ftp.dat,0,64,0", "OK"))
+        return false;
+
+    if(m_uart->available() < 3) return 0;
+
+    m_uart->getc(); m_uart->getc(); // skip \r\n
+
+    char* buf = m_uart->read();
+    if(!buf) return false;
+
+    char* host = NULL;
+    char* uname = NULL;
+    char* pass = NULL;
+
+    host = strtok(buf, " ");
+    uname = strtok(NULL, " ");
+    pass = strtok(NULL, " \r");
+
+    if(!host || !uname || !pass) {
+        free(buf);
+        return false;
+    }
+
+    m_uart->print("AT+FTPSERV=");
+    m_uart->print(host);
+    Command("");
+
+    m_uart->print("AT+FTPUN=");
+    m_uart->print(uname);
+    Command("");
+
+    m_uart->print("AT+FTPPW=");
+    m_uart->print(pass);
+    Command("");
+
+    free(buf);
+    return true;
+}
+
+bool GSM::FTPWrite(const char* fname, const char* text) {
+    if(!SetupFTP()) return false;
+
+	Command("AT+FTPPUTPATH=/");
+    m_uart->print("AT+FTPPUTNAME=");
+	Command(fname);
+    
+	Command("AT+FTPPUTOPT=\"APPE\"");
+    
+    if(!InitInternet())
+        return false;
+
+    // Max response time: 75 seconds (In case no response is received from server)
+    Command("AT+FTPPUT=1");
+    if(!Command("", "+FTPPUT: 1,1,", 75000)) {
+        Command("AT+SAPBR=0,1"); // Close bearer
+        return false;
+    }
+
+    char buf[64];
+    snprintf(buf, sizeof(buf), "AT+FTPPUT=2,%d", strlen(text));
+    Command(buf);
+    
+    m_uart->print(text);
+    //Command("\r\n");
+
+    //Command("AT+FTPPUT=2,0");
+    
+    if(!Command("AT+FTPPUT=2,0", "+FTPPUT: 1,0", 75000)) {
+        Command("AT+SAPBR=0,1"); // Close bearer
+        return false;
+    }
+    
+    Command("AT+SAPBR=0,1"); // Close bearer
+
+    return true;
+}
+
+bool GSM::PerformUpdate(/*const char* server, const char* username, const char* password*/) {
+    Str cmd;
+
+    if(!SetupFTP())
+        return false;
+
+    Command("AT+SAPBR=3,1,\"APN\",\"internet\"");
+    /*cmd.setf("AT+FTPSERV=%s", server);
+	Command(cmd.c_str());
+    cmd.setf("AT+FTPUN=%s", username);
+	Command(cmd.c_str());
+    cmd.setf("AT+FTPPW=%s", password);
+	Command(cmd.c_str());*/
+	Command("AT+FTPGETPATH=/");
+	Command("AT+FTPGETNAME=update.bin");
+
+    if(!InitInternet())
+        return false;
 
     // Max response time: 75 seconds (In case no response is received from server)
     Command("AT+FTPGETTOFS=0,update.bin"); // Get "OK" response first

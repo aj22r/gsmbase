@@ -59,5 +59,11 @@ public:
     void RemoveNum(const char* num);
     int GetAllNum(Vector<char*>* list = NULL);
 
-    bool PerformUpdate(const char* server, const char* username, const char* password);
+    bool InitInternet();
+
+    void cmd_SetFTPCreds(const char* sender, const char* args);
+    bool SetupFTP();
+    bool FTPWrite(const char* fname, const char* text);
+
+    bool PerformUpdate(/*const char* server, const char* username, const char* password*/);
 };

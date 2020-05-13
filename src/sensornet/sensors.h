@@ -7,6 +7,7 @@ namespace Sensors {
 		TYPE_SOIL = 1,
 		TYPE_TEMP_HUM = 2,
 		TYPE_TEMP = 3,
+		TYPE_NODEBASE = 4,
 		TYPE_COMMAND = 255
 	};
 
@@ -27,5 +28,11 @@ namespace Sensors {
 
 	struct Temp {
 		uint16_t temperature;
+	};
+
+	struct Nodebase {
+		uint16_t voltage;
+		uint16_t light;
+		uint8_t rain;
 	};
 }
