@@ -42,7 +42,7 @@ add_definitions(
     -DDONT_USE_CMSIS_INIT
 )
 
-set(CMAKE_EXE_LINKER_FLAGS "-mcpu=${ARCH} -mthumb -Wl,--gc-sections -Wl,--script=../linker/samd10d14.ld --specs=nano.specs")
+set(CMAKE_EXE_LINKER_FLAGS "-mcpu=${ARCH} -mthumb -Wl,--gc-sections -Wl,--script=../linker/samd10d14.ld -flto --specs=nano.specs")
 
 add_compile_options(
     -W
@@ -58,6 +58,7 @@ add_compile_options(
     -funsigned-bitfields
     -mcpu=${ARCH}
     -mthumb
+    -flto=thin
 )
 
 set(CMAKE_CXX_FLAGS "-fno-rtti")

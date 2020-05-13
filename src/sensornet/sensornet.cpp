@@ -100,7 +100,7 @@ void Sensornet::ProcessPacket(SensorPacket& pkt) {
         auto& cmd = m_cmd_queue[i];
         if(cmd.id == pkt.id) {
             m_radio.stopListening();
-            // Consider the command successful only if it was successfully received
+            // Consider the command successful only if it was successfully transmitted
             if(m_radio.write(&cmd, 32)) {
                 m_cmd_queue.erase(m_cmd_queue.begin() + i);
                 i--;
